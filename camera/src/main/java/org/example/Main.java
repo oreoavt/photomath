@@ -130,24 +130,27 @@ public class Main {
 
     private static String evaluateExpression(String expression) {
         expression = expression.replaceAll("\\s+", "");
-        if (!expression.matches("[0-9+\\-*/()%^]+")) {
+        if (!expression.matches("[0-9+\\-*/%^&|~()]+")) {
             return "Expresión inválida";
         }
         String postfix = infixToPostfix(expression);
 
-
-
         try {
-            Expression e = new ExpressionBuilder(expression)
-                    .build();
+            if (containsLogicalOperators(expression)) {
+                boolean result = evaluateLogicalExpression(postfix);
+                return String.valueOf(result);
+            } else {
+                Expression e = new ExpressionBuilder(expression)
+                        .build();
 
-            ValidationResult validationResult = e.validate();
-            if (!validationResult.isValid()) {
-                return "Expresión inválida";
+                ValidationResult validationResult = e.validate();
+                if (!validationResult.isValid()) {
+                    return "Expresión inválida";
+                }
+
+                double result = e.evaluate();
+                return String.valueOf(result);
             }
-
-            double result = e.evaluate();
-            return String.valueOf(result);
 
         } catch (UnknownFunctionOrVariableException ex) {
             return "Expresión inválida";
@@ -155,6 +158,36 @@ public class Main {
             return "Error aritmético";
         }
     }
+    private static boolean containsLogicalOperators(String expression) {
+        for (char c : expression.toCharArray()) {
+            if (isLogicalOperator(c)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    private static boolean evaluateLogicalExpression(String postfix) {
+        Stack<Boolean> stack = new Stack<>();
+
+        for (char c : postfix.toCharArray()) {
+            if (Character.isDigit(c)) {
+                stack.push(c == '1');
+            } else if (isLogicalOperator(c)) {
+                boolean operand2 = stack.pop();
+                if (c == '~') {
+                    stack.push(applyLogicalOperator(c, operand2, false)); // Operador unario
+                } else {
+                    boolean operand1 = stack.pop();
+                    stack.push(applyLogicalOperator(c, operand1, operand2));
+                }
+            }
+        }
+
+        return stack.pop();
+    }
+
+
+
 
     private static void showResultPopup(String resultado) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -230,6 +263,25 @@ public class Main {
     private static boolean isOperator(char c) {
         return c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c =='^';
     }
+    private static boolean isLogicalOperator(char c) {
+        return c == '&' || c == '|' || c == '^' || c == '~';
+    }
+    private static boolean applyLogicalOperator(char operator, boolean operand1, boolean operand2) {
+        switch (operator) {
+            case '&':
+                return operand1 && operand2;
+            case '|':
+                return operand1 || operand2;
+            case '^':
+                return operand1 ^ operand2;
+            case '~':
+                return !operand1;
+            default:
+                throw new IllegalArgumentException("Operador lógico no válido: " + operator);
+        }
+    }
+
+
 
     private static double applyOperator(char operator, double operand1, double operand2) {
         switch (operator) {
