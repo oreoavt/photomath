@@ -130,27 +130,23 @@ public class Main {
 
     private static String evaluateExpression(String expression) {
         expression = expression.replaceAll("\\s+", "");
-        if (!expression.matches("[0-9+\\-*/%^&|~()]+")) {
+        expression = expression.replaceAll("\\*\\*", "^");
+        if (!expression.matches("[0-9+\\-*/()%^&|~]+")) {
             return "Expresión inválida";
         }
         String postfix = infixToPostfix(expression);
 
         try {
-            if (containsLogicalOperators(expression)) {
-                boolean result = evaluateLogicalExpression(postfix);
-                return String.valueOf(result);
-            } else {
-                Expression e = new ExpressionBuilder(expression)
-                        .build();
+            Expression e = new ExpressionBuilder(expression)
+                    .build();
 
-                ValidationResult validationResult = e.validate();
-                if (!validationResult.isValid()) {
-                    return "Expresión inválida";
-                }
-
-                double result = e.evaluate();
-                return String.valueOf(result);
+            ValidationResult validationResult = e.validate();
+            if (!validationResult.isValid()) {
+                return "Expresión inválida";
             }
+
+            double result = e.evaluate();
+            return String.valueOf(result);
 
         } catch (UnknownFunctionOrVariableException ex) {
             return "Expresión inválida";
@@ -158,36 +154,6 @@ public class Main {
             return "Error aritmético";
         }
     }
-    private static boolean containsLogicalOperators(String expression) {
-        for (char c : expression.toCharArray()) {
-            if (isLogicalOperator(c)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    private static boolean evaluateLogicalExpression(String postfix) {
-        Stack<Boolean> stack = new Stack<>();
-
-        for (char c : postfix.toCharArray()) {
-            if (Character.isDigit(c)) {
-                stack.push(c == '1');
-            } else if (isLogicalOperator(c)) {
-                boolean operand2 = stack.pop();
-                if (c == '~') {
-                    stack.push(applyLogicalOperator(c, operand2, false)); // Operador unario
-                } else {
-                    boolean operand1 = stack.pop();
-                    stack.push(applyLogicalOperator(c, operand1, operand2));
-                }
-            }
-        }
-
-        return stack.pop();
-    }
-
-
-
 
     private static void showResultPopup(String resultado) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -233,15 +199,14 @@ public class Main {
             return 1;
         } else if (operator == '*' || operator == '/') {
             return 2;
-        } else if (operator == '%') {
-            return 3;
-        } else if (operator == '^'){
-            return 4;
+        } else if (operator == '%' || operator == '^') {
+            return 3; // Asignar una prioridad mayor al exponente
         } else if (operator == '(' || operator == ')') {
             return 0;
         }
         return 0;
     }
+
 
     private static double evaluatePostfix(String postfix) {
         Stack<Double> stack = new Stack<>();
@@ -250,38 +215,27 @@ public class Main {
             if (Character.isDigit(c)) {
                 stack.push(Double.parseDouble(String.valueOf(c)));
             } else if (isOperator(c)) {
-                double operand2 = stack.pop();
-                double operand1 = stack.pop();
-                double result = applyOperator(c, operand1, operand2);
-                stack.push(result);
+                if (c == '^') { // Si es el operador de exponente
+                    double exponent = stack.pop();
+                    double base = stack.pop();
+                    double result = Math.pow(base, exponent);
+                    stack.push(result);
+                } else {
+                    double operand2 = stack.pop();
+                    double operand1 = stack.pop();
+                    double result = applyOperator(c, operand1, operand2);
+                    stack.push(result);
+                }
             }
         }
 
         return stack.pop();
     }
 
+
     private static boolean isOperator(char c) {
         return c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c =='^';
     }
-    private static boolean isLogicalOperator(char c) {
-        return c == '&' || c == '|' || c == '^' || c == '~';
-    }
-    private static boolean applyLogicalOperator(char operator, boolean operand1, boolean operand2) {
-        switch (operator) {
-            case '&':
-                return operand1 && operand2;
-            case '|':
-                return operand1 || operand2;
-            case '^':
-                return operand1 ^ operand2;
-            case '~':
-                return !operand1;
-            default:
-                throw new IllegalArgumentException("Operador lógico no válido: " + operator);
-        }
-    }
-
-
 
     private static double applyOperator(char operator, double operand1, double operand2) {
         switch (operator) {
