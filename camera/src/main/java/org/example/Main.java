@@ -1,5 +1,6 @@
 package org.example;
 
+
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 import net.objecthunter.exp4j.ValidationResult;
@@ -20,6 +21,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Stack;
 
+/**
+ * Clase principal que contiene la lógica para capturar y procesar expresiones matemáticas desde una cámara.
+ */
 public class Main {
     private static boolean captureRequested = false;
 
@@ -128,6 +132,11 @@ public class Main {
         }
     }
 
+    /**
+     * Evaluar la expresion matemática capturada en la cámara
+     * @param expression Se representa la expresión matemática en formato de cadena
+     * @return El resultado de la expresión o un mensaje de error si no se puede resolver
+     */
     private static String evaluateExpression(String expression) {
         expression = expression.replaceAll("\\s+", "");
         expression = expression.replaceAll("\\*\\*", "^");
@@ -155,6 +164,10 @@ public class Main {
         }
     }
 
+    /**
+     * Muestra el resultado de la oprtación en una ventana emergente
+     * @param resultado Es el resultado de la evaluación de la expresión
+     */
     private static void showResultPopup(String resultado) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -164,6 +177,11 @@ public class Main {
         });
     }
 
+    /**
+     * Método que convierte de una expresión sufijo a postfijo
+     * @param infix Es la expresión en formato infijo
+     * @return La expresión en formato postfijo
+     */
     private static String infixToPostfix(String infix) {
         StringBuilder postfix = new StringBuilder();
         Stack<Character> stack = new Stack<>();
@@ -194,6 +212,11 @@ public class Main {
     }
 
 
+    /**
+     * Método encargado de determinar la prioridad de un operador
+     * @param operator Es el operador a evaluar
+     * @return La prioridad del operador
+     */
     private static int precedence(char operator) {
         if (operator == '+' || operator == '-') {
             return 1;
@@ -233,10 +256,22 @@ public class Main {
     }
 
 
+    /**
+     * Métedo que verifica si un carácter es un operador
+     * @param c Es el carácter a evalar
+     * @return true si se trata de un operador, false en caso contrario
+     */
     private static boolean isOperator(char c) {
         return c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c =='^';
     }
 
+    /**
+     * Método encargado de aplicar un operador a dos operandos
+     * @param operator Es el operador a aplicar
+     * @param operand1 El primer operando
+     * @param operand2 El segundo operando
+     * @return El resultado de aplicar el operador a los operandos
+     */
     private static double applyOperator(char operator, double operand1, double operand2) {
         switch (operator) {
             case '+':
